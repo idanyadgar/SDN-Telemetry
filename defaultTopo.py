@@ -37,12 +37,7 @@ class MyTopo(Topo):
 def main():
     topo = MyTopo()
     net = Mininet(topo = topo, switch = OVSSwitch, controller = RemoteController, agent = OurAgent, autoSetMacs = True)
-    print 'a'
-    
-
-    print 'b';
     net.start()
-    print 'c'
     CLI(net)
     net.stop()
 
