@@ -2,7 +2,7 @@ from mininet.cli import CLI
 from mininet.log import setLogLevel
 from mininet.net import Mininet
 from mininet.topo import Topo
-from mininet.node import (OVSSwitch,Agent)
+from mininet.node import (OVSSwitch, Agent, RemoteController)
 from ourAgent import OurAgent
 
 class MyTopo(Topo):
@@ -36,8 +36,13 @@ class MyTopo(Topo):
 
 def main():
     topo = MyTopo()
-    net = Mininet(topo = topo, switch = OVSSwitch, controller = None, agent = OurAgent, autoSetMacs = True)
+    net = Mininet(topo = topo, switch = OVSSwitch, controller = RemoteController, agent = OurAgent, autoSetMacs = True)
+    print 'a'
+    
+
+    print 'b';
     net.start()
+    print 'c'
     CLI(net)
     net.stop()
 
