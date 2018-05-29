@@ -30,7 +30,7 @@ class SecMonitor(app_manager.RyuApp):
 
     def __init__(self, *args, **kwargs):
         super(SecMonitor, self).__init__(*args, **kwargs)
-        self.first_agent_table = 1
+        self.first_agent_table = 2
         self.count = 0
         self.totalSize = 0
 

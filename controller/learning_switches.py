@@ -100,10 +100,8 @@ class OurController(app_manager.RyuApp):
 
         if dst in self.mac_to_port[dpid]:
             out_port = self.mac_to_port[dpid][dst]
-            self.logger.info("Found out port %s (%s, %s, %s, %s)", out_port, dpid, src, dst, in_port)
         else:
             out_port = ofproto.OFPP_FLOOD
-            self.logger.info("Unknown out port, flooding %s, %s, %s, %s", dpid, src, dst, in_port)
 
         actions = [parser.OFPActionOutput(out_port)]
 
