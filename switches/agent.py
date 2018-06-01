@@ -3,7 +3,7 @@ from mininet.util import quietRun
 
 class OurAgent(Agent):
     def __init__(self, name, *ryuArgs, **kwargs):
-        ourApp = 'agentApp.py'
+        ourApp = 'learning_switch.py'
 
         currDir = quietRun('pwd').strip('\r\n')
         ryuCoreDir = '%s/' % currDir
