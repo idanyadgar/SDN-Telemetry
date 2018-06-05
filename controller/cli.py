@@ -32,4 +32,6 @@ class ControllerCLI(cmd.Cmd):
 s = socket.socket()
 s.connect((socket.gethostname(), 9999))
 
+s.send("(LearningSwitches, [])")
+
 ControllerCLI(s).cmdloop()

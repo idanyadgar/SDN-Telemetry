@@ -8,6 +8,7 @@ from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 
+from apps.learning_switches import LearningSwitches
 from apps.byte_counter import ByteCount
 from apps.packet_counter import PacketCount
 
@@ -18,7 +19,7 @@ class Loader(RyuApp):
 		super(Loader, self).__init__(*args, **kwargs)
 
 		self.feature_events = []
-		self.current_table_id = 1
+		self.table_id = 0
 
 		self.ryu_mgr = AppManager.get_instance()
 		self.install(OFPHandler)
@@ -78,8 +79,8 @@ class Loader(RyuApp):
 
 				cls, params = eval(msg)
 				params.append(self.feature_events)
-				params.append(self.current_table_id)
+				params.append(self.table_id)
 
-				self.current_table_id += 1
+				self.table_id += 1
 
 				self.install(cls(*params))

@@ -24,13 +24,15 @@ from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 
-class LearningSwitch(app_manager.RyuApp):
+
+class SecMonitor(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
     def __init__(self, *args, **kwargs):
-        super(LearningSwitch, self).__init__(*args, **kwargs)
-        self.mac_to_port = {}
-        self.table_id = 0
+        super(SecMonitor, self).__init__(*args, **kwargs)
+        self.first_agent_table = 2
+        self.count = 0
+        self.totalSize = 0
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
@@ -54,16 +56,15 @@ class LearningSwitch(app_manager.RyuApp):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
-        inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions),
-                parser.OFPInstructionGotoTable(self.table_id + 1)]
-
+        inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS,
+                                             actions)]
         if buffer_id:
-            mod = parser.OFPFlowMod(datapath=datapath, buffer_id=buffer_id, table_id=self.table_id,
+            mod = parser.OFPFlowMod(datapath=datapath, buffer_id=buffer_id,
                                     priority=priority, match=match,
-                                    instructions=inst)
+                                    instructions=inst, table_id=self.first_agent_table)
         else:
-            mod = parser.OFPFlowMod(datapath=datapath, priority=priority, table_id=self.table_id,
-                                    match=match, instructions=inst)
+            mod = parser.OFPFlowMod(datapath=datapath, priority=priority,
+                                    match=match, instructions=inst, table_id=self.first_agent_table)
         datapath.send_msg(mod)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
@@ -76,46 +77,21 @@ class LearningSwitch(app_manager.RyuApp):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
         in_port = msg.match['in_port']
-
         pkt = packet.Packet(msg.data)
         eth = pkt.get_protocols(ethernet.ethernet)[0]
-
         if eth.ethertype == ether_types.ETH_TYPE_LLDP:
             # ignore lldp packet
             return
+
         dst = eth.dst
         src = eth.src
 
-        if msg.table_id > 0:
-            return
-        dpid = datapath.id
-        self.mac_to_port.setdefault(dpid, {})
+        self.count += 1
+        self.totalSize += msg.msg_len
+        if self.count == 5:
+            self.logger.debug("PACKETIN")
+            self.logger.debug(datetime.datetime.now())
+            self.logger.debug("total size recieved in the last 5 packets: {0}".format(self.totalSize))
 
-        # learn a mac address to avoid FLOOD next time.
-        self.mac_to_port[dpid][src] = in_port
-
-        if dst in self.mac_to_port[dpid]:
-            out_port = self.mac_to_port[dpid][dst]
-        else:
-            out_port = ofproto.OFPP_FLOOD
-
-        actions = [parser.OFPActionOutput(out_port)]
-
-        # install a flow to avoid packet_in next time
-        if out_port != ofproto.OFPP_FLOOD:
-            match = parser.OFPMatch(in_port=in_port, eth_dst=dst)
-            # verify if we have a valid buffer_id, if yes avoid to send both
-            # flow_mod & packet_out
-            if msg.buffer_id != ofproto.OFP_NO_BUFFER:
-                self.add_flow(datapath, 1, match, actions, msg.buffer_id)
-                return
-            else:
-                self.add_flow(datapath, 1, match, actions)
-        data = None
-        if msg.buffer_id == ofproto.OFP_NO_BUFFER:
-            data = msg.data
-
-        out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
-                                  in_port=in_port, actions=actions, data=data)
-
-        datapath.send_msg(out)
+            self.count = 0
+            self.totalSize = 0
