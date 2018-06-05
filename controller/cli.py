@@ -30,7 +30,7 @@ class ControllerCLI(cmd.Cmd):
 		print ''
 
 	def do_install(self, args):
-		'Usage: install [app] [args...]\nFor list of availabe apps run list command.\n'
+		'Usage: install [app] [args...]\nFor list of available apps run list command.\n'
 
 		args = args.split(' ')
 
@@ -39,7 +39,19 @@ class ControllerCLI(cmd.Cmd):
 		elif not argsByApp.has_key(args[0]):
 			print '%s is not a supported app' % (args[0],)
 		else:
-			self.sock.send("(%s ,%s)" % (args[0], [intIfNumeric(arg) for arg in args[1:]]))
+			self.sock.send("('install', %s ,%s)" % (args[0], [intIfNumeric(arg) for arg in args[1:]]))
+
+	def do_uninstall(self, args):
+		'Usage: uninstall [app]\n'
+
+		args = args.split(' ')
+
+		if len(args) < 1:
+			print 'App to uninstall not specified'
+		elif not argsByApp.has_key(args[0]):
+			print '%s is not a supported app' % (args[0],)
+		else:
+			self.sock.send("('uninstall', %s ,[])" % (args[0]))
 
 	def do_EOF(self, args):
 		'Usage: Ctrl+D exits the CLI\n'
@@ -53,6 +65,6 @@ class ControllerCLI(cmd.Cmd):
 s = socket.socket()
 s.connect((socket.gethostname(), 9999))
 
-s.send("(LearningSwitches, [])")
+s.send("('install', LearningSwitches, [])")
 
 ControllerCLI(s).cmdloop()
