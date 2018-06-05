@@ -1,6 +1,16 @@
 import socket
 import cmd
 
+argsByApp = {
+	'PacketCount': '[interval in seconds]',
+	'ByteCount': '[interval in seconds]'
+}
+
+def intIfNumeric(str):
+	try:
+		return int(str)
+	except Exception as e:
+		return str
 
 class ControllerCLI(cmd.Cmd):
 	intro = 'Welcome to the controller CLI.\nType help or ? to list commands.\n'
@@ -10,18 +20,29 @@ class ControllerCLI(cmd.Cmd):
 		cmd.Cmd.__init__(self)
 		self.sock = sock
 
-	def do_packet_count(self, args):
-		'Usage: packet_count [interval in seconds]\n'
+	def do_list(self, args):
+		'Usage: list\nLists all the available apps.\n'
 
-		self.sock.send("(PacketCount ,[%s])" % args)
+		print 'List of available apps and their usage:\n'
+		for app, appArgs in argsByApp.items():
+			print '%s - install %s %s' % (app, app, appArgs)
 
-	def do_byte_count(self, args):
-		'Usage: byte_count [interval in seconds]\n'
+		print ''
 
-		self.sock.send("(ByteCount ,[%s])" % args)
+	def do_install(self, args):
+		'Usage: install [app] [args...]\nFor list of availabe apps run list command.\n'
+
+		args = args.split(' ')
+
+		if len(args) < 1:
+			print 'App to install not specified'
+		elif not argsByApp.has_key(args[0]):
+			print '%s is not a supported app' % (args[0],)
+		else:
+			self.sock.send("(%s ,%s)" % (args[0], [intIfNumeric(arg) for arg in args[1:]]))
 
 	def do_EOF(self, args):
-		'Usage: Ctrl+D exists the CLI\n'
+		'Usage: Ctrl+D exits the CLI\n'
 
 		self.sock.close()
 
