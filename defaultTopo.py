@@ -3,7 +3,6 @@ from mininet.log import setLogLevel
 from mininet.net import Mininet
 from mininet.topo import Topo
 from mininet.node import (OVSSwitch, Agent, RemoteController)
-from ourAgent import OurAgent
 
 class MyTopo(Topo):
     def build(self):
@@ -24,19 +23,9 @@ class MyTopo(Topo):
         self.addLink(h2, s3)
         self.addLink(h3, s1)
 
-        a0 = self.addAgent('a0')
-        a1 = self.addAgent('a1')
-        a2 = self.addAgent('a2')
-        a3 = self.addAgent('a3')
-
-        self.attach(a0, s0)
-        self.attach(a1, s1)
-        self.attach(a2, s2)
-        self.attach(a3, s3)
-
 def main():
     topo = MyTopo()
-    net = Mininet(topo = topo, switch = OVSSwitch, controller = RemoteController, agent = OurAgent, autoSetMacs = True)
+    net = Mininet(topo = topo, switch = OVSSwitch, controller = RemoteController, autoSetMacs = True)
     net.start()
     CLI(net)
     net.stop()
