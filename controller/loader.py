@@ -11,7 +11,7 @@ from ryu.controller.handler import set_ev_cls
 from apps.learning_switches import LearningSwitches
 from apps.byte_counter import ByteCount
 from apps.packet_counter import PacketCount
-
+from apps.switch_listener import SwitchListen
 
 
 class Loader(RyuApp):
@@ -23,12 +23,12 @@ class Loader(RyuApp):
 
 		self.ryu_mgr = AppManager.get_instance()
 		self.install(OFPHandler)
+		self.install(SwitchListen(lambda ev: self.switch_features_handler(ev)))
 		self.start_listening()
 
-
 	@set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
-        def switch_features_handler(self, ev):
-            self.feature_events.append(ev)
+	def switch_features_handler(self, ev):
+		self.feature_events.append(ev)
 
 	def create_context(self, key, cls):
 		context = None
