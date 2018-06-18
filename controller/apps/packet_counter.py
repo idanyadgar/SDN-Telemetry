@@ -23,7 +23,7 @@ from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 
-def PacketCount(interval = 5, features_events = [], table_id = 1):
+def PacketCount(features_events = [], table_id = 1, interval = 5):
     class PacketCounter(app_manager.RyuApp):
         OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 

@@ -13,42 +13,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
+import time
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3
 from ryu.lib.packet import packet
-from ryu.lib.packet import ethernet
-from ryu.lib.packet import ether_types
+from ryu.lib.packet import ipv4
+from ryu.lib.packet import tcp
+from ryu.lib.packet import udp
 
-def ByteCount(features_events = [], table_id = 1, interval = 5):
-    class ByteCounter(app_manager.RyuApp):
+def PacketLog(features_events = [], table_id = 1, *args):
+    class PacketLogger(app_manager.RyuApp):
         OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
         def __init__(self, *args, **kwargs):
-            super(ByteCounter, self).__init__(*args, **kwargs)
-            self.interval = interval
+            super(PacketLogger, self).__init__(*args, **kwargs)
             self.table_id = table_id
+            self.periodStart = time.time()
 
         def start(self):
-            super(ByteCounter, self).start()
+            super(PacketLogger, self).start()
             for ev in features_events:
                 self.switch_features_handler(ev)
 
         @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
         def switch_features_handler(self, ev):
-            self.add_counter_flow(ev.msg.datapath)
+            self.add_logger_flow(ev.msg.datapath)
 
-        def add_counter_flow(self, dp):
+        def add_logger_flow(self, dp):
             ofproto = dp.ofproto
             parser = dp.ofproto_parser
 
-            match = parser.OFPMatch()
+            match = parser.OFPMatch(**dict(zip(args[::2], args[1::2])))
             actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
                                               ofproto.OFPCML_NO_BUFFER)]
-            self.add_flow(dp, 0, match, actions, self.interval)
+            self.add_flow(dp, 0, match, actions)
 
         def add_flow(self, datapath, priority, match, actions, hard_timeout=0, buffer_id=None):
             ofproto = datapath.ofproto
@@ -61,24 +62,30 @@ def ByteCount(features_events = [], table_id = 1, interval = 5):
             if buffer_id:
                 mod = parser.OFPFlowMod(datapath=datapath, buffer_id=buffer_id, table_id=self.table_id,
                                         priority=priority, match=match, hard_timeout=hard_timeout,
-                                        instructions=inst, flags=ofproto.OFPFF_SEND_FLOW_REM)
+                                        instructions=inst)
             else:
                 mod = parser.OFPFlowMod(datapath=datapath, priority=priority, hard_timeout=hard_timeout, table_id=self.table_id,
-                                        match=match, instructions=inst, flags=ofproto.OFPFF_SEND_FLOW_REM)
+                                        match=match, instructions=inst)
             datapath.send_msg(mod)
 
-        @set_ev_cls(ofp_event.EventOFPFlowRemoved, MAIN_DISPATCHER)
-        def flow_removed_handler(self, ev):
+        @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
+        def _packet_in_handler(self, ev):
             msg = ev.msg
-            if (msg.table_id != self.table_id):
+            pkt = packet.Packet(msg.data)
+            dp = msg.datapath
+
+            ip = pkt.get_protocol(ipv4.ipv4)
+            if ip is None or ip.proto not in [6, 17]: # if the packet is not tcp nor udp
                 return
 
-            dp = msg.datapath
-            ofp = dp.ofproto
+            if ip.proto == 6: # packet is tcp
+                proto = pkt.get_protocol(tcp.tcp)
+                protoName = 'tcp'
+            else: # packet is udp
+                proto = pkt.get_protocol(udp.udp)
+                protoName = 'udp'
 
-            self.add_counter_flow(dp)
+            with open('packet_log.out', 'a') as file:
+                file.write('[%f seconds since start of period]: (%s, %d, %s, %d, %s) ingress port: %d in switch %d\n' % (time.time() - self.periodStart, ip.src, proto.src_port, ip.dst, proto.dst_port, protoName, msg.match['in_port'], dp.id))
 
-            with open('byte_count.out', 'a') as file:
-                file.write("In the last %d seconds we saw %d bytes in switch %d\n" % (msg.duration_sec, msg.byte_count, dp.id))
-
-    return ByteCounter
+    return PacketLogger

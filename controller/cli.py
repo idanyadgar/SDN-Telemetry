@@ -3,7 +3,8 @@ import cmd
 
 argsByApp = {
 	'PacketCount': '[interval in seconds]',
-	'ByteCount': '[interval in seconds]'
+	'ByteCount': '[interval in seconds]',
+	'PacketLog': 'OFPMatch args... (for example: install PacketLog in_port 2 tcp_src 80)'
 }
 
 def intIfNumeric(str):

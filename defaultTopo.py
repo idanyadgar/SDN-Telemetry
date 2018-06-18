@@ -6,22 +6,22 @@ from mininet.node import (OVSSwitch, Agent, RemoteController)
 
 class MyTopo(Topo):
     def build(self):
-        s0 = self.addSwitch('s0')
         s1 = self.addSwitch('s1')
         s2 = self.addSwitch('s2')
         s3 = self.addSwitch('s3')
+        s4 = self.addSwitch('s4')
 
-        self.addLink(s0, s2)
-        self.addLink(s0, s3)
-        self.addLink(s1, s2)
+        self.addLink(s1, s3)
+        self.addLink(s1, s4)
+        self.addLink(s2, s3)
 
         h1 = self.addHost('laptop')
         h3 = self.addHost('printer')
         h2 = self.addHost('pc')
 
-        self.addLink(h1, s0)
-        self.addLink(h2, s3)
-        self.addLink(h3, s1)
+        self.addLink(h1, s1)
+        self.addLink(h2, s4)
+        self.addLink(h3, s2)
 
 def main():
     topo = MyTopo()

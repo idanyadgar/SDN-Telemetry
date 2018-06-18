@@ -11,6 +11,7 @@ from ryu.controller.handler import set_ev_cls
 from apps.learning_switches import LearningSwitches
 from apps.byte_counter import ByteCount
 from apps.packet_counter import PacketCount
+from apps.packet_logger import PacketLog
 from apps.switch_listener import SwitchListen
 
 
@@ -114,8 +115,7 @@ class Loader(RyuApp):
 				operation, cls, params = eval(msg)
 
 				if operation == 'install':
-					params.append(self.feature_events)
-					params.append(self.table_id)
+					params = [self.feature_events, self.table_id] + params
 
 					self.install(cls(*params))
 					self.table_id += 1
