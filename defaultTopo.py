@@ -2,7 +2,7 @@ from mininet.cli import CLI
 from mininet.log import setLogLevel
 from mininet.net import Mininet
 from mininet.topo import Topo
-from mininet.node import (OVSSwitch, Agent, RemoteController)
+from mininet.node import (OVSSwitch, RemoteController)
 
 class MyTopo(Topo):
     def build(self):
