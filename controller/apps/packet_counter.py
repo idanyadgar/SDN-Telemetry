@@ -88,7 +88,7 @@ def PacketCount(features_events = [], table_id = 1, interval = 5):
                 "timestamp": time.time(),
                 "switch_id": dp.id,
                 "duration": msg.duration_sec,
-                "byte_count": msg.packet_count
+                "packet_count": msg.packet_count
             }
 
             with open('out/packet_count.out', 'a') as file:
