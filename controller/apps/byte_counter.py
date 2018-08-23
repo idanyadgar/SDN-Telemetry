@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import datetime
+import os
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
@@ -36,6 +37,11 @@ def ByteCount(features_events = [], table_id = 1, interval = 5):
             super(ByteCounter, self).start()
             for ev in features_events:
                 self.switch_features_handler(ev)
+            
+            try:
+                os.mkdir('out')
+            except OSError:
+                pass
 
         @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
         def switch_features_handler(self, ev):
@@ -78,7 +84,7 @@ def ByteCount(features_events = [], table_id = 1, interval = 5):
 
             self.add_counter_flow(dp)
 
-            with open('byte_count.out', 'a') as file:
+            with open('out/byte_count.out', 'a') as file:
                 file.write("In the last %d seconds we saw %d bytes in switch %d\n" % (msg.duration_sec, msg.byte_count, dp.id))
 
     return ByteCounter

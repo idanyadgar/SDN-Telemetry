@@ -37,6 +37,11 @@ def PacketLog(features_events = [], table_id = 1, *args):
             super(PacketLogger, self).start()
             for ev in features_events:
                 self.switch_features_handler(ev)
+            
+            try:
+                os.mkdir('out')
+            except OSError:
+                pass
 
         @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
         def switch_features_handler(self, ev):
@@ -85,7 +90,7 @@ def PacketLog(features_events = [], table_id = 1, *args):
                 proto = pkt.get_protocol(udp.udp)
                 protoName = 'udp'
 
-            with open('packet_log.out', 'a') as file:
+            with open('out/packet_log.out', 'a') as file:
                 file.write('[%f seconds since start of period]: (%s, %d, %s, %d, %s) ingress port: %d in switch %d\n' % (time.time() - self.periodStart, ip.src, proto.src_port, ip.dst, proto.dst_port, protoName, msg.match['in_port'], dp.id))
 
     return PacketLogger

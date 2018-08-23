@@ -36,6 +36,11 @@ def PacketCount(features_events = [], table_id = 1, interval = 5):
             super(PacketCounter, self).start()
             for ev in features_events:
                 self.switch_features_handler(ev)
+            
+            try:
+                os.mkdir('out')
+            except OSError:
+                pass
 
         @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
         def switch_features_handler(self, ev):
@@ -78,7 +83,7 @@ def PacketCount(features_events = [], table_id = 1, interval = 5):
 
             self.add_counter_flow(dp)
 
-            with open('packet_count.out', 'a') as file:
+            with open('out/packet_count.out', 'a') as file:
                 file.write("In the last %d seconds we saw %d packets in switch %d\n" % (msg.duration_sec, msg.packet_count, dp.id))
 
     return PacketCounter
