@@ -91,6 +91,7 @@ def PacketLog(features_events = [], table_id = 1, *args):
                 protoName = 'udp'
             
             data = {
+                "origin": "packet_logger",
                 "timestamp": time.time(),
                 "switch_id": dp.id,
                 "period_start": self.periodStart,

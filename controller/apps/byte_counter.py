@@ -84,6 +84,7 @@ def ByteCount(features_events = [], table_id = 1, interval = 5):
             self.add_counter_flow(dp)
             
             data = {
+                "origin": "byte_counter",
                 "timestamp": time.time(),
                 "switch_id": dp.id,
                 "duration": msg.duration_sec,
