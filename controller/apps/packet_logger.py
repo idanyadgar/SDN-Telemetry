@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time
+import time, os, json
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
@@ -89,8 +89,20 @@ def PacketLog(features_events = [], table_id = 1, *args):
             else: # packet is udp
                 proto = pkt.get_protocol(udp.udp)
                 protoName = 'udp'
+            
+            data = {
+                "timestamp": time.time(),
+                "switch_id": dp.id,
+                "period_start": self.periodStart,
+                "ip_src": ip.src,
+                "ip_dst": ip.dst,
+                "port_src": proto.src_port,
+                "port_dst": proto.dst_port,
+                "protocol": protoName,
+                "ingress_port": msg.match['in_port']
+            }
 
             with open('out/packet_log.out', 'a') as file:
-                file.write('[%f seconds since start of period]: (%s, %d, %s, %d, %s) ingress port: %d in switch %d\n' % (time.time() - self.periodStart, ip.src, proto.src_port, ip.dst, proto.dst_port, protoName, msg.match['in_port'], dp.id))
+                file.write(json.dumps(data) + '\n')
 
     return PacketLogger

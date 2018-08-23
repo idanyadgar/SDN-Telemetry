@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
+import time, os, json
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
@@ -82,8 +82,15 @@ def PacketCount(features_events = [], table_id = 1, interval = 5):
             ofp = dp.ofproto
 
             self.add_counter_flow(dp)
+            
+            data = {
+                "timestamp": time.time(),
+                "switch_id": dp.id,
+                "duration": msg.duration_sec,
+                "byte_count": msg.packet_count
+            }
 
             with open('out/packet_count.out', 'a') as file:
-                file.write("In the last %d seconds we saw %d packets in switch %d\n" % (msg.duration_sec, msg.packet_count, dp.id))
+                file.write(json.dumps(data) + '\n')
 
     return PacketCounter
