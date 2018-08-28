@@ -31,7 +31,7 @@ PNDA also allows using Apache Spark for data analysis. Apache Spark is a scalabl
 We used spark with python in order to run some analytics on the collected metrics.
 
 The analytics are written and ran inside Jupyter notebooks.  
-Jupyter is also included in PNDA. It provides a web interface for writing and running python scripts.  
+Jupyter is also included in PNDA. It provides a web interface for writing and running documents that contain live code.  
 We created a notebook for each analytic script we wrote and used Spark inside the notebook to manipulate and collect the data.  
 Also, in a Jupyter notebook, we can use different python libraries in order to, for example, plot out results.
 
@@ -88,9 +88,132 @@ Download the image [from here](http://d5zjefk3wzew6.cloudfront.net/Red-PNDA_0.2.
 
 Install it on VMWare or VirtualBox, with at least 4GB of RAM, 2 CPUs and 8GB of storage. 
 
-After installing and running the machine, use the username *pnda* and password *pnda* to log in.  
+After installing and running the machine, use the username *pnda* and password *pnda* to log in.
+
 Now, run the following: `sudo bash assign-ip.sh eth0`.  
 Get the IP of the machine by running `ifconfig`.  
-And open your web browser and navigate to this IP, you should see PNDA console (a web interface).
+Open your web browser and navigate to this IP, you should see PNDA console (a web interface).
 
-If you have any problem with this section, read [this guide](https://github.com/pndaproject/red-pnda/blob/develop/README.md).
+If you have any problems with this section, read [this guide](https://github.com/pndaproject/red-pnda/blob/develop/README.md).
+
+
+# Project Structure
+
+Go back to the machine where you downloaded the project's source code and navigate to the directory thar contains the source code of the project.
+
+In the next section you will learn the project structure and the different components.
+
+## The controller
+We defined our controller inside the `controller/loader.py` file.
+
+The controller is a Ryu application.  
+Our controller is notified when a new switch is found in the network, and the `switch_features_handler` method is executed when this happends because we decorated it with:  
+`@set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)`
+
+At the begining we don't have any of our metric-collectors installed and loaded. Thus, we save all the events of new switches inside a list, and we pass this list to each metric-collector - this way the metric collector knows which switches are in the network.
+
+Also, in order to install and uninstall applications, our controller listens on port 9999 for the CLI connection and waits for commands.
+
+Go to the `controller` directory and run `ryu-manager loader.py` in order to start the controller.
+
+## Our topology
+Out topology has 3 hosts, 4 switches and 1 remote controller.  
+In the `defaultTopo.py` file we define and run our network using mininet.
+
+Run this script as a super-user (`sudo python defaultTopo.py`) and you should get the mininet CLI.  
+Execute `nodes` and `links` commands in order to see the different nodes and links in the network.
+
+We used a remote controller, so mininet will connect to our controller if it is online.
+
+## The metric-collectors
+Inside the `controller/apps` directory we have out applications we can load and unload dynamically.  
+
+We can see that our packet logger class is wrapped with a function. this is done in order to pass in parameters.  
+Because we don't instantiate the class instance ourselves, but send it to Ryu to load it, we cannot control the parameters that are passed to the contructor, so we chose this approach to pass in parameters.
+
+Each application receives the list of new-switch events from the controller, the table id and the arguments that the user sent from the CLI.  
+The reason each app receives the table id to work with, is to allow many metric collectors to work independently. The controller is responsible to send the table IDs in a way that different applications don't collide with each other, and each metric collector is responsible to sent the packet to the next table (to table ID + 1).  
+That way, each application adds entries to a different table, and each entry is responsible to pass to matched packet to the next table.
+
+## The CLI
+The CLI is used to install and uninstall applications on the controller dynamically.  
+It can be found inside `controller/cli.py`.
+
+In the CLI we firstly connect to the controller at port 9999.
+After that, we install the learning switches application, which allows the switches to learn the hosts in each of their port, and to create their "routing tables".
+
+Go to the `controller` directory and run `python cli.py` in order to start the CLI.  
+Enter `?` to view the available commands.
+
+Use `install` to load a metric collector and `uninstall` to unload one. Use `list` to see all the supported apps.
+
+### **Note:**
+In our project we support LIFO install/uninstall order.
+
+This means that this order is okay:  
+`install PacketCount 4`  
+`install PacketLog`  
+`uninstall PacketCount`  
+`uninstall PacketLog`
+
+But this will not work:  
+`install PacketCount 4`  
+`install PacketLog`  
+`uninstall PacketLog`  
+`uninstall PacketCount`
+
+
+
+## Our watchdog
+Inside the `out_watchdog.py` file we have our watchdog that watches the destination directory.  
+It also implements a Kafka producer, and sends the data to PNDA.
+The kafka server, the topic and the path to watch can be modified using the variables on the top.
+
+**-- Change the Kafka server address to match the Red PNDA address --**
+
+Run `python out_watchdog.py` in order to start the watchdog.
+
+## The example notebooks
+Inside `example_notebooks` directory we have some example notebooks. We will use them later.
+
+
+# Collecting analytics
+Start red PNDA, run mininet, the controller, the CLI and the watchdog.  
+Now, after doing so, we are ready to collect metrics from our network.
+
+## Install a metric collector
+Install the packet count application by typing in `install PacketCount 4` inside the CLI.  
+This command installs the packet count metric collector, and sends the parameter 4 to it. Packet count recieves a parameter which sets the interval in seconds. Sending 4 means that the packets will be counted on each switch, and after every 4 seconds, the amount of packets will be logged to the destination directory and the counters will be set back to 0.
+
+## Run some traffic
+Now run some traffic, for example by typing `pingall` in the mininet CLI. This will send pings between all the hosts.
+
+## Check Red PNDA to see the metrics
+After the metrics have been collected by the metric collector and saved inside the destination directory, the watchdog reads them and sends them to Red PNDA.
+
+The data is sent to the "raw" topic. Everything sent to this topic is automatically saved under /data/year=Y/month=M/day=D/hour=H/dump.json  
+Where Y/m/d is the date and H is the hour when the data has arrived.
+
+## Run analytics
+In your browser, in the PNDA console, navigate to `Jupyter`. the username and password are `pnda` / `pnda`.
+
+Inside Jupyter you will some notebooks that come with red PNDA. They include some example and guides.
+
+Also, you can upload notebooks. Select one of the notebooks inside the `example_notebooks` directory.  
+Inside the notebook you will see some code sections. You can run each section by pressing `ctrl+Enter` or `shift+Enter`.
+
+Change the year, month, day and hour on the top of the document to match your data.
+
+
+# Write your own code
+## Create new metric collectors
+In order to create a new metric collector, clone one of the existing ones and change the class and function names.  
+Go to `controller/loader.py` file and import it, and go to `controller/cli.py` and add it to the `argsByApp` dictionary.
+
+You can implement the `start` method to run some code when the app is loaded and basically write a standard Ryu app.  
+It is important to use the table ID you recieved from the controller to prevent unusual behavior.
+
+## Create new analytics
+Open Jupyter inside the PNDA console in the browser and create a new notebook. Choose `PySpark` notebook in order to work with Apache Spark inside your document.
+
+You can use any of the APIs that come with Spark and import and use any library that comes with Jupyter.
