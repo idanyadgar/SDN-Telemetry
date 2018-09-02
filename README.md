@@ -222,7 +222,7 @@ You can use any of the APIs that come with Spark and import and use any library 
 # Moving to the real PNDA
 As we said, red PNDA is a smaller, lightweight version of PNDA. Red PNDA was designed to run a laptop and to be used for educational, development and experimental matters.
 
-You might want, when the next step, to change from red PNDA to the real PNDA.  
+You might want, as the next step, to change from red PNDA to the real PNDA.  
 PNDA is designed ro run in a distributed environment, on a cluster of servers, providing load balancing and ease of scaling.
 
 PNDA can be installed on many environments, one for example can be AWS.  
@@ -236,5 +236,5 @@ Also, change the topic to the topic you want the data to be sent to.
 ## Working with PNDA
 Working with PNDA should be the same like you did with red PNDA, but now the **watchdog** will have a cluster of kafka servers to send the data to.
 
-The only change will be the source from which you will read the data from, when writing analytics with Jupyter Notebook, according to the topic you sent your data to.  
+The only change will be the source from which you will read the data when writing analytics with Jupyter Notebook, according to the topic you sent your data to.  
 You can read further [here](http://pnda.io/pnda-guide/streamingest/topic-preparation.html), mainly the **Dataset location**.
