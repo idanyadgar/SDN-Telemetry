@@ -217,3 +217,24 @@ It is important to use the table ID you recieved from the controller to prevent 
 Open Jupyter inside the PNDA console in the browser and create a new notebook. Choose `PySpark` notebook in order to work with Apache Spark inside your document.
 
 You can use any of the APIs that come with Spark and import and use any library that comes with Jupyter.
+
+
+# Moving to the real PNDA
+As we said, red PNDA is a smaller, lightweight version of PNDA. Red PNDA was designed to run a laptop and to be used for educational, development and experimental matters.
+
+You might want, when the next step, to change from red PNDA to the real PNDA.  
+PNDA is designed ro run in a distributed environment, on a cluster of servers, providing load balancing and ease of scaling.
+
+PNDA can be installed on many environments, one for example can be AWS.  
+You can follow the steps in [this link](http://pnda.io/pnda-guide/provisioning/aws/PREPARE.html) to create your cluster and install PNDA.
+
+## Configure watchdog to use new Kafka servers
+After installing PNDA, you should change the *kafka_server* variable in the **watchdog** to be a python list containing all the IPs of your kafka servers (with red PNDA we had only one).
+
+Also, change the topic to the topic you want the data to be sent to.
+
+## Working with PNDA
+Working with PNDA should be the same like you did with red PNDA, but now the **watchdog** will have a cluster of kafka servers to send the data to.
+
+The only change will be the source from which you will read the data from, when writing analytics with Jupyter Notebook, according to the topic you sent your data to.  
+You can read further [here](http://pnda.io/pnda-guide/streamingest/topic-preparation.html), mainly the **Dataset location**.
