@@ -220,12 +220,23 @@ You can use any of the APIs that come with Spark and import and use any library 
 
 
 # Moving to the real PNDA
-As we said, red PNDA is a smaller, lightweight version of PNDA. Red PNDA was designed to run a laptop and to be used for educational, development and experimental matters.
+As we said, red PNDA is a smaller, lightweight version of PNDA.  
+Red PNDA was designed to run a laptop and to be used for educational, development and experimental matters.
 
-You might want, as the next step, to change from red PNDA to the real PNDA.  
+## Our try
+We wanted, as the next step, to change from red PNDA to the real PNDA.  
 PNDA is designed ro run in a distributed environment, on a cluster of servers, providing load balancing and ease of scaling.
 
-PNDA can be installed on many environments, one for example can be AWS.  
+We tried to simulate a cluster, by running 2 different virtual machines on our laptop, and used [this guid](http://pnda.io/pnda-guide/provisioning/server-cluster/PREPARE.html) to install PNDA.  
+Basically, we can divide it to two parts: installing PNDA with its components & intalling the PNDA CLI which allows us to control our clusters.
+
+Unfortunately, we had some issues while trying to install PNDA on such an architecture (two VMs, one for PNDA and one for the CLI).  
+We recieved many different build errors, and even after succeeding to install everything properly, we had errors while creating the cluster with the CLI.
+
+## Our colnclusions
+It seems like PNDA is not designed to run on such an architecture, but on a real cloud/server cluster.
+
+PNDA can be installed on many environments, one for example can be AWS which we recommend.  
 You can follow the steps in [this link](http://pnda.io/pnda-guide/provisioning/aws/PREPARE.html) to create your cluster and install PNDA.
 
 ## Configure watchdog to use new Kafka servers
